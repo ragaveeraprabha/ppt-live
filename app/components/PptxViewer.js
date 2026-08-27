@@ -37,9 +37,10 @@ export default function PptxViewer({ presentation, activeSlide = 1, onSlideCount
 
         if (cancelled || !viewerRef.current) return;
 
+        const width = Math.max(320, viewerRef.current.clientWidth);
         const previewer = init(viewerRef.current, {
-          width: 900,
-          height: 506,
+          width,
+          height: Math.round(width * 9 / 16),
           mode: "slide",
         });
         const pptx = await previewer.preview(buffer);

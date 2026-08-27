@@ -40,13 +40,6 @@ export default function UserPage() {
           The admin controls the current slide. This view updates automatically.
         </p>
 
-        {presentation && (
-          <p className="uploaded-file">
-            <a href={presentation.data} download={presentation.name}>
-              Open uploaded presentation
-            </a>
-          </p>
-        )}
       </section>
     </main>
   );

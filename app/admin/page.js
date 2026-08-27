@@ -89,7 +89,7 @@ export default function AdminPage() {
         <input
           className="file-input"
           type="file"
-          accept=".ppt,.pptx"
+          accept=".pptx"
           onChange={(event) => {
             setFile(event.target.files[0]);
           }}
