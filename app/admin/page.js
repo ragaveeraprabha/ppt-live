@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import PptxViewer from "../components/PptxViewer";
 
-const realtimeServerUrl = process.env.NEXT_PUBLIC_REALTIME_SERVER_URL || "http://localhost:3002";
+const realtimeServerUrl = process.env.NEXT_PUBLIC_REALTIME_SERVER_URL || "http://localhost:5032";
 
 export default function AdminPage() {
   const [file, setFile] = useState(null);
@@ -12,6 +12,7 @@ export default function AdminPage() {
   const [slide, setSlide] = useState(1);
   const [slideCount, setSlideCount] = useState(1);
   const [presentation, setPresentation] = useState(null);
+  const [jumpSlide, setJumpSlide] = useState("");
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -70,6 +71,16 @@ export default function AdminPage() {
     }
   };
 
+  const goToSlide = () => {
+    const slideNum = parseInt(jumpSlide, 10);
+    if (slideNum && slideNum > 0 && slideNum <= slideCount) {
+      socketRef.current?.emit("change-slide", slideNum);
+      setJumpSlide("");
+    } else {
+      setMessage(`Please enter a slide number between 1 and ${slideCount}`);
+    }
+  };
+
   return (
     <main className="page">
 
@@ -124,26 +135,47 @@ export default function AdminPage() {
           {presentation ? <PptxViewer presentation={presentation} activeSlide={slide} onSlideCount={setSlideCount} /> : <h1>Slide {slide}</h1>}
         </div>
 
-        <div className="controls">
+        <div className="slide-controls">
+          <div className="controls">
+            <button
+              className="button button-secondary"
+              onClick={previousSlide}
+              disabled={slide <= 1}
+            >
+              ← Previous
+            </button>
 
-          <button
-            className="button button-secondary"
-            onClick={previousSlide}
-          >
-            Previous
-          </button>
+            <div className="slide-info">
+              <span className="slide-number">
+                Slide {slide} of {slideCount}
+              </span>
+              <div className="jump-slide-section">
+                <input
+                  type="number"
+                  min="1"
+                  max={slideCount}
+                  value={jumpSlide}
+                  onChange={(e) => setJumpSlide(e.target.value)}
+                  placeholder="Go to slide..."
+                  className="slide-input"
+                />
+                <button
+                  className="button button-primary button-small"
+                  onClick={goToSlide}
+                >
+                  Go
+                </button>
+              </div>
+            </div>
 
-          <span className="slide-number">
-            Slide {slide}
-          </span>
-
-          <button
-            className="button button-primary"
-            onClick={nextSlide}
-          >
-            Next
-          </button>
-
+            <button
+              className="button button-primary"
+              onClick={nextSlide}
+              disabled={slide >= slideCount}
+            >
+              Next →
+            </button>
+          </div>
         </div>
 
       </section>
