@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:admin\" \"npm run dev:user\" \"npm run dev:realtime\"",
-    "dev:admin": "set PORT=5030&& set NEXT_DIST_DIR=.next-admin&& node server.js",
-    "dev:user": "set PORT=5031&& set NEXT_DIST_DIR=.next-user&& node server.js",
-    "dev:realtime": "set REALTIME_PORT=5032&& node realtime-server.js",
+    "dev:admin": "PORT=5030 NEXT_DIST_DIR=.next-admin node server.js",
+    "dev:user": "PORT=5032 NEXT_DIST_DIR=.next-user node server.js",
+    "dev:realtime": "REALTIME_PORT=5033 node realtime-server.js",
     "build": "next build",
     "lint": "eslint",
     "start": "node server.js"
