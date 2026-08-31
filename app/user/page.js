@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import PptxViewer from "../components/PptxViewer";
 
-const realtimeServerUrl = process.env.NEXT_PUBLIC_REALTIME_SERVER_URL || "http://localhost:5032";
+const realtimeServerUrl =
+  process.env.NEXT_PUBLIC_REALTIME_SERVER_URL;
 
 export default function UserPage() {
   const [slide, setSlide] = useState(1);

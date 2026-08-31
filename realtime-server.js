@@ -1,7 +1,7 @@
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 
-const hostname = "localhost";
+const hostname = "0.0.0.0";
 const port = Number(process.env.REALTIME_PORT) || 3002;
 const httpServer = createServer();
 const io = new Server(httpServer, {
