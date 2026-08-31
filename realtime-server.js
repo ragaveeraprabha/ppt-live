@@ -6,7 +6,7 @@ const port = Number(process.env.REALTIME_PORT) || 3002;
 const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:5030", "http://localhost:5031"],
+    origin: ["http://localhost:5030", "http://localhost:5032"],
   },
   maxHttpBufferSize: 50 * 1024 * 1024,
 });
