@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev:admin\" \"npm run dev:user\" \"npm run dev:realtime\"",
-    "dev:admin": "PORT=5030 NEXT_DIST_DIR=.next-admin node server.js",
-    "dev:user": "PORT=5032 NEXT_DIST_DIR=.next-user node server.js",
-    "dev:realtime": "REALTIME_PORT=5033 node realtime-server.js",
-    "build": "next build",
-    "lint": "eslint",
-    "start": "node server.js"
+    "dev": "concurrently --kill-others-on-fail --names admin,user,realtime \"npm run dev:admin\" \"npm run dev:user\" \"npm run dev:realtime\"",
+  "dev:admin": "cross-env PORT=5030 NEXT_DIST_DIR=.next-admin next dev -H 0.0.0.0",
+  "dev:user": "cross-env PORT=5032 NEXT_DIST_DIR=.next-user next dev -H 0.0.0.0",
+  "dev:realtime": "cross-env REALTIME_PORT=5033 node realtime-server.js",
+  "build": "next build",
+  "lint": "eslint",
+  "start": "node server.js"
   },
   "dependencies": {
     "next": "16.3.3",
