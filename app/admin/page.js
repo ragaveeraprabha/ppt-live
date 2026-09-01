@@ -6,9 +6,8 @@ import PptxViewer from "../components/PptxViewer";
 
 const realtimeServerUrl =
   typeof window !== "undefined"
-    ? `http://${window.location.hostname}:5033`
+    ? `${window.location.protocol}//${window.location.hostname}:5033`
     : "http://localhost:5033";
-
 export default function AdminPage() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");

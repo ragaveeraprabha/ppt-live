@@ -20,11 +20,9 @@ let currentPresentation = null;
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
-  // Send current state to newly connected client
   socket.emit("slide-change", currentSlide);
   socket.emit("presentation-upload", currentPresentation);
 
-  // Admin changes slide
   socket.on("change-slide", (slideNumber) => {
     if (!Number.isInteger(slideNumber) || slideNumber < 1) {
       return;
@@ -32,11 +30,9 @@ io.on("connection", (socket) => {
 
     currentSlide = slideNumber;
 
-    // Send slide change to Admin and User
     io.emit("slide-change", currentSlide);
   });
 
-  // Admin uploads PPT
   socket.on("presentation-upload", (presentation) => {
     if (
       !presentation ||
@@ -51,10 +47,7 @@ io.on("connection", (socket) => {
 
     console.log("Presentation uploaded:", presentation.name);
 
-    // Send PPT to Admin and User
     io.emit("presentation-upload", currentPresentation);
-
-    // Reset slide to 1
     io.emit("slide-change", currentSlide);
   });
 
