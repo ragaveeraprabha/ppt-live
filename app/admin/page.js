@@ -15,32 +15,45 @@ export default function AdminPage() {
   const [slideCount, setSlideCount] = useState(1);
   const [presentation, setPresentation] = useState(null);
   const [jumpSlide, setJumpSlide] = useState("");
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const socketRef = useRef(null);
 
   useEffect(() => {
+    console.log("Connecting to realtime server at:", realtimeServerUrl);
     const socket = io(realtimeServerUrl);
 
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("Connected to realtime server:", socket.id);
+      console.log("✓ Connected to realtime server:", socket.id);
+      setSocketConnected(true);
+      setMessage("Connected to realtime server");
     });
 
     socket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error.message);
-      setMessage("Could not connect to realtime server.");
+      console.error("✗ Socket connection error:", error);
+      setSocketConnected(false);
+      setMessage("❌ Could not connect to realtime server: " + error.message);
     });
 
     socket.on("slide-change", (slideNumber) => {
+      console.log("Slide changed to:", slideNumber);
       setSlide(slideNumber);
     });
 
     socket.on("presentation-upload", (uploadedPresentation) => {
+      console.log("Received presentation-upload event:", {
+        name: uploadedPresentation?.name,
+        dataLength: uploadedPresentation?.data?.length,
+      });
       setPresentation(uploadedPresentation);
+      setMessage("✓ PPT received! Rendering slides...");
     });
 
     socket.on("disconnect", () => {
       console.log("Disconnected from realtime server");
+      setSocketConnected(false);
     });
 
     return () => {
@@ -50,19 +63,33 @@ export default function AdminPage() {
 
   const uploadPPT = () => {
     if (!file) {
-      setMessage("Please select a PPT file.");
+      setMessage("❌ Please select a PPT file.");
       return;
     }
+
+    setUploading(true);
+    setMessage("📤 Reading file...");
+    console.log("=== Upload Starting ===");
+    console.log("File selected:", { name: file.name, size: file.size, type: file.type });
 
     const reader = new FileReader();
 
     reader.onload = () => {
+      console.log("✓ File read successfully, size:", reader.result.length);
+      
       const uploadedPresentation = {
         name: file.name,
         type: file.type || "application/octet-stream",
         data: reader.result,
       };
 
+      console.log("Presentation object created:", {
+        name: uploadedPresentation.name,
+        type: uploadedPresentation.type,
+        dataLength: uploadedPresentation.data?.length,
+      });
+
+      console.log("Setting local presentation state...");
       setPresentation(uploadedPresentation);
       setSlide(1);
       setSlideCount(1);
@@ -70,27 +97,56 @@ export default function AdminPage() {
       const socket = socketRef.current;
 
       if (!socket) {
-        setMessage("Realtime server connection is not available.");
+        console.error("Socket not available");
+        setMessage("❌ Realtime server connection is not available.");
+        setUploading(false);
         return;
       }
 
+      console.log("Socket status - Connected:", socket.connected);
+
       if (socket.connected) {
+        console.log("✓ Socket connected, emitting presentation-upload event...");
+        setMessage("📤 Uploading to realtime server...");
         socket.emit("presentation-upload", uploadedPresentation);
-        setMessage("PPT uploaded: " + file.name);
+        setMessage("✓ PPT uploaded: " + file.name);
+        setUploading(false);
       } else {
-        setMessage("Connecting to realtime server...");
+        console.log("Socket not connected yet, waiting for connection...");
+        setMessage("⏳ Waiting for realtime server connection...");
 
         socket.once("connect", () => {
+          console.log("✓ Socket connected after waiting, emitting presentation-upload event...");
+          setMessage("📤 Uploading to realtime server...");
           socket.emit("presentation-upload", uploadedPresentation);
-          setMessage("PPT uploaded: " + file.name);
+          setMessage("✓ PPT uploaded: " + file.name);
+          setUploading(false);
         });
+
+        // Timeout if connection takes too long
+        setTimeout(() => {
+          if (uploading) {
+            console.error("Connection timeout");
+            setMessage("❌ Connection timeout. Check if realtime server is running on port 5033.");
+            setUploading(false);
+          }
+        }, 5000);
       }
     };
 
-    reader.onerror = () => {
-      setMessage("Could not read the PPT file.");
+    reader.onerror = (error) => {
+      console.error("FileReader error:", error);
+      setMessage("❌ Could not read the PPT file: " + error.message);
+      setUploading(false);
     };
 
+    reader.onprogress = (event) => {
+      const percent = Math.round((event.loaded / event.total) * 100);
+      console.log("File reading progress:", percent + "%");
+      setMessage("📤 Reading file: " + percent + "%");
+    };
+
+    console.log("Starting to read file:", file.name);
     reader.readAsDataURL(file);
   };
 
@@ -125,6 +181,17 @@ export default function AdminPage() {
       <div className="header">
         <h1>Admin Page</h1>
         <p>Upload and control the presentation</p>
+        <p style={{
+          marginTop: "10px",
+          padding: "8px 12px",
+          borderRadius: "4px",
+          fontSize: "14px",
+          backgroundColor: socketConnected ? "#d4edda" : "#f8d7da",
+          color: socketConnected ? "#155724" : "#721c24",
+          fontWeight: "bold"
+        }}>
+          {socketConnected ? "🟢 Connected to Realtime Server" : "🔴 Disconnected from Realtime Server"}
+        </p>
       </div>
 
       <section className="upload-section">
@@ -142,25 +209,14 @@ export default function AdminPage() {
         <button
           className="button button-primary"
           onClick={uploadPPT}
+          disabled={!file || uploading}
         >
-          Upload PPT
+          {uploading ? "⏳ Uploading..." : "Upload PPT"}
         </button>
 
         <p className="message">
           {message}
         </p>
-
-        {presentation && (
-          <p className="uploaded-file">
-            Shared file:{" "}
-            <a
-              href={presentation.data}
-              download={presentation.name}
-            >
-              {presentation.name}
-            </a>
-          </p>
-        )}
       </section>
 
       <section className="presentation-section">

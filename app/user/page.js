@@ -38,6 +38,10 @@ export default function UserPage() {
     });
 
     socket.on("presentation-upload", (uploadedPresentation) => {
+      console.log("Received presentation-upload event:", {
+        name: uploadedPresentation?.name,
+        dataLength: uploadedPresentation?.data?.length,
+      });
       setPresentation(uploadedPresentation);
     });
 
