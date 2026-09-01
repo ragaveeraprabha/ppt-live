@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import PptxViewer from "../components/PptxViewer";
 
-const realtimeServerUrl = process.env.NEXT_PUBLIC_REALTIME_SERVER_URL;
+const realtimeServerUrl =
+  typeof window !== "undefined"
+    ? `http://${window.location.hostname}:5033`
+    : "http://localhost:5033";
 
 export default function AdminPage() {
   const [file, setFile] = useState(null);
@@ -17,12 +20,33 @@ export default function AdminPage() {
 
   useEffect(() => {
     const socket = io(realtimeServerUrl);
+
     socketRef.current = socket;
 
-    socket.on("slide-change", setSlide);
-    socket.on("presentation-upload", setPresentation);
+    socket.on("connect", () => {
+      console.log("Connected to realtime server:", socket.id);
+    });
 
-    return () => socket.disconnect();
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error.message);
+      setMessage("Could not connect to realtime server.");
+    });
+
+    socket.on("slide-change", (slideNumber) => {
+      setSlide(slideNumber);
+    });
+
+    socket.on("presentation-upload", (uploadedPresentation) => {
+      setPresentation(uploadedPresentation);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Disconnected from realtime server");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const uploadPPT = () => {
@@ -45,17 +69,29 @@ export default function AdminPage() {
       setSlideCount(1);
 
       const socket = socketRef.current;
-      if (socket?.connected) {
+
+      if (!socket) {
+        setMessage("Realtime server connection is not available.");
+        return;
+      }
+
+      if (socket.connected) {
         socket.emit("presentation-upload", uploadedPresentation);
+        setMessage("PPT uploaded: " + file.name);
       } else {
-        socket?.once("connect", () => {
+        setMessage("Connecting to realtime server...");
+
+        socket.once("connect", () => {
           socket.emit("presentation-upload", uploadedPresentation);
+          setMessage("PPT uploaded: " + file.name);
         });
       }
-      setMessage("PPT uploaded: " + file.name);
     };
 
-    reader.onerror = () => setMessage("Could not read the PPT file.");
+    reader.onerror = () => {
+      setMessage("Could not read the PPT file.");
+    };
+
     reader.readAsDataURL(file);
   };
 
@@ -73,28 +109,26 @@ export default function AdminPage() {
 
   const goToSlide = () => {
     const slideNum = parseInt(jumpSlide, 10);
+
     if (slideNum && slideNum > 0 && slideNum <= slideCount) {
       socketRef.current?.emit("change-slide", slideNum);
       setJumpSlide("");
     } else {
-      setMessage(`Please enter a slide number between 1 and ${slideCount}`);
+      setMessage(
+        `Please enter a slide number between 1 and ${slideCount}`
+      );
     }
   };
 
   return (
     <main className="page">
 
-      {/* Header */}
-
       <div className="header">
         <h1>Admin Page</h1>
         <p>Upload and control the presentation</p>
       </div>
 
-      {/* Upload */}
-
       <section className="upload-section">
-
         <h2>Upload PPT</h2>
 
         <input
@@ -102,7 +136,7 @@ export default function AdminPage() {
           type="file"
           accept=".pptx"
           onChange={(event) => {
-            setFile(event.target.files[0]);
+            setFile(event.target.files?.[0] || null);
           }}
         />
 
@@ -119,24 +153,35 @@ export default function AdminPage() {
 
         {presentation && (
           <p className="uploaded-file">
-            Shared file: <a href={presentation.data} download={presentation.name}>{presentation.name}</a>
+            Shared file:{" "}
+            <a
+              href={presentation.data}
+              download={presentation.name}
+            >
+              {presentation.name}
+            </a>
           </p>
         )}
-
       </section>
 
-      {/* Presentation */}
-
       <section className="presentation-section">
-
         <h2>Presentation</h2>
 
         <div className="slide">
-          {presentation ? <PptxViewer presentation={presentation} activeSlide={slide} onSlideCount={setSlideCount} /> : <h1>Slide {slide}</h1>}
+          {presentation ? (
+            <PptxViewer
+              presentation={presentation}
+              activeSlide={slide}
+              onSlideCount={setSlideCount}
+            />
+          ) : (
+            <h1>Slide {slide}</h1>
+          )}
         </div>
 
         <div className="slide-controls">
           <div className="controls">
+
             <button
               className="button button-secondary"
               onClick={previousSlide}
@@ -146,9 +191,11 @@ export default function AdminPage() {
             </button>
 
             <div className="slide-info">
+
               <span className="slide-number">
                 Slide {slide} of {slideCount}
               </span>
+
               <div className="jump-slide-section">
                 <input
                   type="number"
@@ -159,6 +206,7 @@ export default function AdminPage() {
                   placeholder="Go to slide..."
                   className="slide-input"
                 />
+
                 <button
                   className="button button-primary button-small"
                   onClick={goToSlide}
@@ -166,6 +214,7 @@ export default function AdminPage() {
                   Go
                 </button>
               </div>
+
             </div>
 
             <button
@@ -175,9 +224,9 @@ export default function AdminPage() {
             >
               Next →
             </button>
+
           </div>
         </div>
-
       </section>
 
     </main>
