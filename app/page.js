@@ -1,15 +1,30 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function Home() {
-  return (
-    <main className="home">
-      <h1>Live PPT Presentation</h1>
+  const router = useRouter();
 
-      <a href="/admin" className="home-link">
-        Admin
-      </a>
+  useEffect(() => {
+    // Detect which port we're on and redirect to the appropriate page
+    if (typeof window !== "undefined") {
+      const port = window.location.port;
+      
+      // Admin port
+      if (port === "5030") {
+        router.push("/admin");
+      }
+      // User port
+      else if (port === "5032") {
+        router.push("/user");
+      }
+      // Default to admin if no specific port
+      else {
+        router.push("/admin");
+      }
+    }
+  }, [router]);
 
-      <a href="/user" className="home-link">
-        User
-      </a>
-    </main>
-  );
+  return null;
 }

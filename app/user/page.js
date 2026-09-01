@@ -1,24 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import PptxViewer from "../components/PptxViewer";
 
 const realtimeServerUrl =
-  process.env.NEXT_PUBLIC_REALTIME_SERVER_URL;
+  typeof window !== "undefined"
+    ? `${window.location.protocol}//${window.location.hostname}:5033`
+    : "http://localhost:5033";
 
 export default function UserPage() {
   const [slide, setSlide] = useState(1);
   const [presentation, setPresentation] = useState(null);
   const [connected, setConnected] = useState(false);
+  const socketRef = useRef(null);
 
   useEffect(() => {
     const socket = io(realtimeServerUrl);
+    socketRef.current = socket;
 
-    socket.on("connect", () => setConnected(true));
-    socket.on("disconnect", () => setConnected(false));
-    socket.on("slide-change", setSlide);
-    socket.on("presentation-upload", setPresentation);
+    socket.on("connect", () => {
+      console.log("Connected to realtime server:", socket.id);
+      setConnected(true);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Disconnected from realtime server");
+      setConnected(false);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error.message);
+    });
+
+    socket.on("slide-change", (slideNumber) => {
+      setSlide(slideNumber);
+    });
+
+    socket.on("presentation-upload", (uploadedPresentation) => {
+      setPresentation(uploadedPresentation);
+    });
 
     return () => socket.disconnect();
   }, []);
@@ -27,7 +48,7 @@ export default function UserPage() {
     <main className="page">
       <div className="header">
         <h1>Live Presentation</h1>
-        <p>{connected ? "Connected to the admin" : "Connecting..."}</p>
+        <p>{connected ? "🟢 Connected to the admin" : "🔴 Connecting..."}</p>
       </div>
 
       <section className="presentation-section">

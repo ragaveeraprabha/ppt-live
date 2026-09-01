@@ -29,11 +29,17 @@ export default function PptxViewer({ presentation, activeSlide = 1, onSlideCount
       viewerRef.current.replaceChildren();
 
       try {
-        const [{ init }, response] = await Promise.all([
-          import("pptx-preview"),
-          fetch(presentation.data),
-        ]);
-        const buffer = await response.arrayBuffer();
+        const { init } = await import("pptx-preview");
+
+        // Convert DataURL to ArrayBuffer
+        const dataUrl = presentation.data;
+        const byteString = atob(dataUrl.split(',')[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const view = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          view[i] = byteString.charCodeAt(i);
+        }
+        const buffer = ab;
 
         if (cancelled || !viewerRef.current) return;
 
@@ -46,8 +52,11 @@ export default function PptxViewer({ presentation, activeSlide = 1, onSlideCount
         previewerRef.current = previewer;
         if (typeof onSlideCount === "function") onSlideCount(pptx.slides.length);
         previewer.renderSingleSlide(Math.max(0, Math.min(activeSlideRef.current - 1, pptx.slides.length - 1)));
-      } catch {
-        if (!cancelled) setError("This presentation could not be displayed in the browser.");
+      } catch (err) {
+        if (!cancelled) {
+          console.error("PPT Preview Error:", err);
+          setError("This presentation could not be displayed in the browser.");
+        }
       }
     }
 
