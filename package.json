@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail --names admin,user,realtime \"npm run dev:admin\" \"npm run dev:user\" \"npm run dev:realtime\"",
-    "dev:admin": "cross-env PORT=5030 NEXT_DIST_DIR=.next-admin next dev",
-    "dev:user": "cross-env PORT=5032 NEXT_DIST_DIR=.next-user next dev",
-    "dev:realtime": "cross-env REALTIME_PORT=5033 node realtime-server.js",
-    "build": "next build",
-    "lint": "eslint",
-    "start": "node server.js"
-  },
+  "dev": "concurrently --kill-others-on-fail --names admin,user,realtime \"npm run dev:admin\" \"npm run dev:user\" \"npm run dev:realtime\"",
+  "dev:admin": "cross-env PORT=5030 NEXT_DIST_DIR=.next-admin next dev -H 192.168.68.58",
+  "dev:user": "cross-env PORT=5032 NEXT_DIST_DIR=.next-user next dev -H 192.168.68.58",
+  "dev:realtime": "cross-env REALTIME_PORT=5033 node realtime-server.js",
+  "build": "next build",
+  "lint": "eslint",
+  "start": "node server.js"
+},
   "dependencies": {
     "next": "16.3.3",
     "pptx-preview": "^1.0.7",
