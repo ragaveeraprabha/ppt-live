@@ -6,8 +6,8 @@ import PptxViewer from "../components/PptxViewer";
 
 const realtimeServerUrl =
   typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.hostname}:5033`
-    : "http://localhost:5033";
+    ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}:5033`
+    : "ws://localhost:5033";
 
 export default function UserPage() {
   const [slide, setSlide] = useState(1);
