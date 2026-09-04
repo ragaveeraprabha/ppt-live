@@ -4,11 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import PptxViewer from "../components/PptxViewer";
 
-const realtimeServerUrl =
-  typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.hostname}:5033`
-    : "http://localhost:5033";
-
 export default function UserPage() {
   const [slide, setSlide] = useState(1);
   const [presentation, setPresentation] = useState(null);
@@ -16,7 +11,10 @@ export default function UserPage() {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    const socket = io(realtimeServerUrl);
+    const socket = io(
+      `${window.location.protocol}//${window.location.hostname}:5031`,
+      { auth: { role: "viewer" } }
+    );
     socketRef.current = socket;
 
     socket.on("connect", () => {

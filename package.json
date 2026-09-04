@@ -3,18 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run build && npm run start",
-    "dev:admin": "cross-env PORT=5030 NEXT_DIST_DIR=.next-admin next dev --webpack -H 192.168.68.58",
-    "dev:user": "cross-env PORT=5032 NEXT_DIST_DIR=.next-user next dev --webpack -H 192.168.68.58",
-    "dev:realtime": "cross-env REALTIME_PORT=5033 node realtime-server.js",
+    "dev": "concurrently --kill-others-on-fail --names admin,user,server \"npm run dev:admin\" \"npm run dev:user\" \"npm run dev:server\"",
+    "dev:admin": "cross-env PORT=5030 NEXT_DIST_DIR=.next-admin next dev -H 0.0.0.0",
+    "dev:user": "cross-env PORT=5032 NEXT_DIST_DIR=.next-user next dev -H 0.0.0.0",
+    "dev:server": "cross-env REALTIME_PORT=5031 node realtime-server.js",
     "build": "npm run build:admin && npm run build:user",
     "build:admin": "cross-env NEXT_DIST_DIR=.next-admin next build",
     "build:user": "cross-env NEXT_DIST_DIR=.next-user next build",
     "lint": "eslint",
-    "start": "cross-env NODE_ENV=production concurrently --kill-others-on-fail --names admin,user,realtime \"npm run start:admin\" \"npm run start:user\" \"npm run start:realtime\"",
+    "start": "cross-env NODE_ENV=production concurrently --kill-others-on-fail --names admin,user,server \"npm run start:admin\" \"npm run start:user\" \"npm run start:server\"",
     "start:admin": "cross-env NODE_ENV=production PORT=5030 NEXT_DIST_DIR=.next-admin node server.js",
     "start:user": "cross-env NODE_ENV=production PORT=5032 NEXT_DIST_DIR=.next-user node server.js",
-    "start:realtime": "cross-env REALTIME_PORT=5033 node realtime-server.js"
+    "start:server": "cross-env REALTIME_PORT=5031 node realtime-server.js"
   },
   "dependencies": {
     "next": "16.3.3",

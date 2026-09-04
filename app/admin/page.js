@@ -4,10 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import PptxViewer from "../components/PptxViewer";
 
-const realtimeServerUrl =
-  typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.hostname}:5033`
-    : "http://localhost:5033";
 export default function AdminPage() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
@@ -20,8 +16,10 @@ export default function AdminPage() {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    console.log("Connecting to realtime server at:", realtimeServerUrl);
-    const socket = io(realtimeServerUrl);
+    const socket = io(
+      `${window.location.protocol}//${window.location.hostname}:5031`,
+      { auth: { role: "admin" } }
+    );
 
     socketRef.current = socket;
 
@@ -127,7 +125,7 @@ export default function AdminPage() {
         setTimeout(() => {
           if (uploading) {
             console.error("Connection timeout");
-            setMessage("❌ Connection timeout. Check if realtime server is running on port 5033.");
+            setMessage("❌ Connection timeout. Check that the server is running on port 5031.");
             setUploading(false);
           }
         }, 5000);
